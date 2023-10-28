@@ -1,0 +1,42 @@
+esphome:
+  name: light-dimmer
+  friendly_name: Light Dimmer
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "5Bt8rXvl5d/L0cs31CyndLgBMo+hemBCC3Qg6UX86jo="
+
+ota:
+  password: "fa12a4e581a7513099d8c5cbf19037e5"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Light-Dimmer Fallback Hotspot"
+    password: "C3ktQDAikyiu"
+
+captive_portal:
+
+output:
+  - platform: ledc
+    pin: GPIO03
+    id: gpio_03
+    frequency: "1220Hz"  # 1220Hz, 2441Hz, 4882Hz
+
+light:
+  - platform: monochromatic
+    output: gpio_03
+    name: "ESP32-C3"
+

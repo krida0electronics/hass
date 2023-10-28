@@ -1,0 +1,190 @@
+/*****************************************************
+Chip type               : ATtiny24
+AVR Core Clock frequency: 8,000000 MHz
+Memory model            : Tiny
+External RAM size       : 0
+Data Stack size         : 32
+
+Program size: 308 words (616 bytes), 30,1% of FLASH
+
+
+SUT0 - \/
+
+*****************************************************/
+
+#include <tiny24.h>
+
+#include <delay.h>
+
+#define GATE PORTA.2
+
+
+unsigned char frequency;
+unsigned char STATUS;
+unsigned char adc_count;
+unsigned char F;
+
+unsigned int TIMER_1_DELAY, TIMER_1_BUF_DELAY, ;
+unsigned int VARIABLE;
+unsigned int adc_data;
+unsigned int adc_symm;
+unsigned char NEW_DATA, WORK_STATUS;
+
+
+
+interrupt [EXT_INT0] void ext_int0_isr(void)
+{
+ 
+ if (WORK_STATUS)
+ {                              
+  delay_us(200);
+  GATE = 1;     // GATE to HIGH
+  
+  TIMER_1_DELAY = TIMER_1_BUF_DELAY; 
+  
+  TCNT1H=TIMER_1_DELAY >> 8;
+  TCNT1L=TIMER_1_DELAY & 0xff;
+  
+  TCCR1B=0x02;
+ }
+ 
+ frequency=TCNT0;
+ 
+ TCNT0=0x00; 
+ 
+ if (frequency>74 && frequency<81) {F=100;}  
+ if (frequency>60 && frequency<68) {F=83;} 
+}
+
+// Timer 0 overflow interrupt service routine
+interrupt [TIM0_OVF] void timer0_ovf_isr(void)
+{
+ TCNT0=0x3C;  // every 25.088 ms
+ 
+ GATE=0;  
+ 
+ STATUS=0;
+ 
+ TCCR1B=0x00;
+  
+}
+
+// Timer1 overflow interrupt service routine
+interrupt [TIM1_OVF] void timer1_ovf_isr(void)
+{
+
+ GATE=0;
+ TCCR1B=0x00;
+
+}
+
+#define ADC_VREF_TYPE 0x00
+
+// ADC interrupt service routine
+interrupt [ADC_INT] void adc_isr(void)
+{
+ adc_symm += ADCH;
+
+ adc_count++;
+
+ if (adc_count==255)
+ {
+  adc_count=0;
+  adc_data=adc_symm/255;
+  adc_data = adc_data+20;  
+  adc_symm=0;   
+  
+  if (adc_data>245) {adc_data=245;} 
+  
+  if (adc_data>25) { WORK_STATUS=1;}  
+   else {
+         WORK_STATUS=0;
+         TCCR1B=0x00;
+         GATE=0;
+        }    
+    
+  NEW_DATA = 1; 
+ }
+ 
+ ADCSRA|=0x40;
+}
+
+
+void main(void)
+{
+
+#pragma optsize-
+CLKPR=0x80;
+CLKPR=0x00;
+#ifdef _OPTIMIZE_SIZE_
+#pragma optsize+
+#endif
+
+
+PORTA=0x00;
+DDRA=0b00000100;   //GATE PORTA.2 output
+
+PORTB=0x00;
+DDRB=0x00;
+
+TCCR0A=0x00;
+TCCR0B=0x05;
+TCNT0=0x3C;
+OCR0A=0x00;
+OCR0B=0x00;
+
+TCCR1A=0x00;
+
+TCCR1B=0x00;
+
+//TCCR1B=0x02;
+
+TCNT1H=0xAB;
+TCNT1L=0xCD;
+ICR1H=0x00;
+ICR1L=0x00;
+OCR1AH=0x00;
+OCR1AL=0x00;
+OCR1BH=0x00;
+OCR1BL=0x00;
+
+
+MCUCR=0x02;
+GIMSK=0x40;
+GIFR=0x40;
+
+
+TIMSK0=0x01;
+TIMSK1=0x01;
+
+
+USICR=0x00;
+
+ACSR=0x80;
+ADCSRB=0x00;
+
+
+DIDR0=0x00;
+ADMUX=0b00000001;
+ADCSRA=0x8E;
+ADCSRB&=0x6F;
+ADCSRB|=0x10;
+
+ADCSRA|=0x40;
+
+// Global enable interrupts
+#asm("sei")
+
+while (1)
+      {
+       if (NEW_DATA) 
+       {                                                                   
+         
+        VARIABLE = (((adc_data*F)/255)*100);     
+        TIMER_1_BUF_DELAY = 65535 - VARIABLE;
+          
+        NEW_DATA=0;   
+       }
+
+      };
+}
