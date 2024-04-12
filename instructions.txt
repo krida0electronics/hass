@@ -1,0 +1,49 @@
+
+1. Go to ESPHOME and click "+NEW DEVICE".
+2. Press "Continue". 
+3. Create configuration, choose ESP32-C3.
+4. Click "Install" and in new window "How do you want to install .yaml on your device?" choose "Manual download".
+5. After compile is done you will see new window "What version do you want to download?" -> choose "Modern" and download.
+6. Close terminal window. Now we should install downloaded firmware.
+7. Click to "..." on the device and choose "Install" -> "Plug into this computer" -> "Open ESPHome web".
+8. In new window connect device and click to "INSTALL" > select downloaded firmware and click install.
+9. Go back to the main ESPHome page and you will see your new added device as "ONLINE".
+10. Now we should add couple code strings for our dimmer. Click to "EDIT" and add code.
+   
+    output:
+      - platform: ledc
+        pin: GPIO03
+        id: gpio_03
+        frequency: "1220Hz"  # 1220Hz, 2441Hz, 4882Hz
+
+    light:
+      - platform: monochromatic
+        output: gpio_03
+        name: "ESP32-C3"
+
+11. Click save and go back. Now we should upload new firmware to the dimmer. Now we can do it wirelessly.
+12. Click to "..." on the device and choose "Install" -> "Wirelessly".
+13. After succesfull upload you will see something like that:
+
+    INFO Successfully compiled program.
+    INFO Connecting to 192.168.0.193
+    INFO Uploading /data/build/MOSFET_dimmer/.pioenvs/hehe/firmware.bin (949648 bytes)
+    Uploading: [============================================================] 100% Done...
+
+14. Be patient, soon we will finish. Now we can find our new device and add to the main Home Assistant page.
+15. Go to "Setting" -> "Devices and services" and you will found here "NEW ESPHOME DEVICE".
+16. Click on it "SETUP" and enter encrypted key. It's available in *yaml firmware. Setup your device.
+17. Go to the main Home Assistant page and add there dimmer.
+18. Uhhhhh, ENJOY ;)
+
+ 
+
+
+
+
+
+
+
+
+
+
