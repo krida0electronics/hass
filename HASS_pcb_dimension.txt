@@ -1,0 +1,2 @@
+PCB dimension: 50mm x 89mm
+Enclosure dimension: 59mm x 89mm, height 31mm, 45mm
